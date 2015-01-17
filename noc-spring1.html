@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nature of Code Mover Class</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body{
+            font-family: monospace;
+            background-color: #eee;
+            margin: 0;
+        }
+
+        .container{
+            position: relative;
+            width: 1000px;
+            margin: 0 auto;
+        }
+        
+        #container{
+            background-color: black;
+            height: 600px;
+            color: white;
+        }
+
+        #svg-container{
+            position: absolute;
+            left:0;
+            top: 0;
+            height: inherit;
+            width:inherit;
+        }
+
+        #svg-container circle{
+           fill: #099;
+           stroke-width: 2;
+           stroke: #fff;
+       }
+
+       #svg-container line{
+        stroke-width: 2;
+        stroke: #fff;
+       }
+
+        #player-control{
+            background-color: #333;
+            color: white;
+            height: 100px;
+        }
+
+
+    </style>
+    <script  type="text/javascript" src="js/lib/gl-matrix.js"></script>
+    <script  type="text/javascript" src="js/mover-gl.js"></script>
+    <script  type="text/javascript" src="js/spring-gl.js"></script>
+
+
+    <script  type="text/javascript" src="js/lib/jquery-1.11.2.min.js" ></script>
+    <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+</head>
+
+<body>
+<div class="container" id="container">
+    <svg id="svg-container" xmlns="http://www.w3.org/2000/svg">
+    </svg>
+
+
+</div>
+
+<div class="container" id="player-control">
+    <button type="button" id="play-pause">PLAY</button>
+    <p id="info1">info here</p>
+    <p id="info2">another info</p>
+</div>
+
+
+<!--script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script-->
+
+<script>
+    var anchor =[300, 0], bob_pos=[300, 200], bob_mass=20;
+    var length = 200;
+    var bob = new Mover( bob_mass, bob_pos);
+    var spring = new Spring( anchor, length);
+    var bstretched = false;
+
+    function makeSVG(tag, attrs) {
+        var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (var k in attrs)
+            el.setAttribute(k, attrs[k]);
+            return el;
+    }
+
+    function setup_scene(){
+        var svg_container = document.getElementById('svg-container');
+        var line1 = makeSVG( 'line', {x1:anchor[0], y1:anchor[1], x2:bob_pos[0], y2:bob_pos[1], id:'line1'});
+        svg_container.appendChild(line1);
+        var circle1 = makeSVG( 'circle', {cx:bob_pos[0], cy:bob_pos[1], r:10, id:'circle1'});
+        svg_container.appendChild(circle1);
+    }
+
+    function updateTime(){
+        if( bstretched){
+            var force = spring.stretchForce(bob);
+            bob.applyForce(force);
+            var g =[0, 0.9];
+            bob.applyForce(g);
+            bob.update();
+            //bob.constrain();
+            $("#line1").attr({"x2":bob.x(), "y2": bob.y()});
+            $("#circle1").attr({"cx":bob.x(), "cy":bob.y()});  
+
+            var infotext ="";   
+            infotext += "force:"+ force[0].toFixed(4) + " " + force[1].toFixed(4);
+            $("#info2").text(infotext);    
+        }
+    }
+
+    jQuery(document).ready(function(){
+        setup_scene();
+        updateTime();
+        setInterval( updateTime, 10);
+    });
+
+    jQuery(document).mousedown(function(event){
+        var mx = event.pageX - $("#svg-container").position().left;
+        var my = event.pageY - $("#svg-container").position().top;
+        $("#line1").attr({"x2":mx, "y2":my});
+        $("#circle1").attr({"cx":mx, "cy":mx});
+    });
+
+    jQuery(document).mouseup(function(event){
+        var mx = event.pageX - $("#svg-container").position().left;
+        var my = event.pageY - $("#svg-container").position().top;
+
+        bob.location = [mx, my];
+        var force = spring.stretchForce(bob);
+        var infotext ="";
+
+        bob.applyForce(force);
+        bob.update();
+        bstretched = true;
+         
+        infotext += "force:"+force[0].toFixed(4)+" "+force[1].toFixed(4);
+        $("#info1").text(infotext);
+    });
+
+    $("#play-pause").on("click", function(event){
+         $("#play-pause").blur(); //remove focus from the play/pause button
+    });
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nature of Code Mover Class</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body{
+            font-family: monospace;
+            background-color: #eee;
+            margin: 0;
+        }
+
+        .container{
+            position: relative;
+            width: 1000px;
+            margin: 0 auto;
+        }
+        
+        #container{
+            background-color: black;
+            height: 600px;
+            color: white;
+        }
+
+        #svg-container{
+            position: absolute;
+            left:0;
+            top: 0;
+            height: inherit;
+            width:inherit;
+        }
+
+        #svg-container circle{
+           fill: #333;
+       }
+
+        #player-control{
+            background-color: #333;
+            color: white;
+            height: 100px;
+        }
+
+
+    </style>
+    <script  type="text/javascript" src="js/gl-matrix.js"></script>
+    <script  type="text/javascript" src="js/mover-gl.js"></script>
+    <script  type="text/javascript" src="js/attractor-gl.js"></script>
+
+
+    <script  type="text/javascript" src="js/lib/jquery-1.11.2.min.js" ></script>
+    <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+</head>
+
+<body>
+<div class="container" id="container">
+    <svg id="svg-container" xmlns="http://www.w3.org/2000/svg">
+    </svg>
+
+
+</div>
+
+<div class="container" id="player-control">
+    <button type="button" id="play-pause">PLAY</button>
+    <p id="info1">info here</p>
+    <p id="info2">another info</p>
+</div>
+
+
+<!--script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script-->
+
+<script>
+    var step_x = 5, step_y = 5;
+    var num_x = 200, num_y = 120;
+    var frameCount =0;
+    var amplitude = ~~num_x/2;
+    var period = 20;
+    var cu= ~~num_x/2, cv=~~num_y/2;
+    var prev_r=0, prev_rad_step=0;
+
+    function makeSVG(tag, attrs) {
+        var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (var k in attrs)
+            el.setAttribute(k, attrs[k]);
+            return el;
+    }
+
+
+    function setup_scene(){
+        var circle_r = 2;
+        var svg = $("#svg-container");
+
+        for( var i=1; i<num_y; i++){
+            for( var j=1; j<num_x; j++ ){
+                var circle = makeSVG( 'circle', {cx: j*step_x, cy: i*step_y, r: circle_r, id: "circle"+j+"-"+i});
+                document.getElementById('svg-container').appendChild(circle);
+            }
+        }
+    }
+
+    function updateTime(){
+        var r = ~~(amplitude * Math.sin( Math.PI * frameCount/period ));
+        var rad_step = Math.PI/(r*10.0);
+
+        if( prev_r != 0){
+                for( var rad=0; rad<Math.PI*2; rad+=prev_rad_step){
+                var x = ~~(cu + prev_r*Math.cos(rad));
+                var y = ~~(cv + prev_r*Math.sin(rad));
+                if( x >0 && x<num_x){
+                    if( y >0 && y<num_y){
+                        $("#circle"+x+"-"+y).css({"fill":"#333"});
+                    }
+                }
+            }
+        }
+
+        for( var rad=0; rad<Math.PI*2; rad+=rad_step){
+            var x = ~~(cu + r*Math.cos(rad));
+            var y = ~~(cv + r*Math.sin(rad));
+            if( x >0 && x<num_x){
+                if( y >0 && y<num_y){
+                    $("#circle"+x+"-"+y).css({"fill":"#aaa"});
+                }
+            }
+        }
+
+        prev_r = r;
+        prev_rad_step = rad_step;
+
+       /* if( x>0 && x<num_x)
+            $("#circle"+x+"-"+cv).css({"fill":"#00ffff"});*/
+
+        frameCount++;
+        frameCount = frameCount%period;
+    }
+
+    jQuery(document).ready(function(){
+        setup_scene();
+        updateTime();
+        setInterval( updateTime, 30);
+    });
+
+    $("#play-pause").on("click", function(event){
+         $("#play-pause").blur(); //remove focus from the play/pause button
+    });
+</script>
+
+
+</body>
+</html>

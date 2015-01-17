@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nature of Code Mover Class</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body{
+            font-family: monospace;
+            background-color: #eee;
+            margin: 0;
+        }
+
+        .container{
+            position: relative;
+            width: 1000px;
+            margin: 0 auto;
+        }
+        
+        #container{
+            background-color: black;
+            height: 600px;
+            color: white;
+        }
+
+        #water{
+            background-color: #6a3a00;
+            position: absolute;
+            left:0;
+            top: 400px;
+            height: 200px;
+            width:inherit;
+        }
+
+        #player-control{
+            background-color: #333;
+            color: white;
+            height: 100px;
+        }
+    </style>
+    <script  type="text/javascript" src="js/lib/gl-matrix.js"></script>
+    <script  type="text/javascript" src="js/mover-gl.js"></script>
+    <script  type="text/javascript" src="js/attractor-gl.js"></script>
+
+
+    <script  type="text/javascript" src="js/lib/jquery-1.11.2.min.js" ></script>
+    <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+</head>
+
+<body>
+<div class="container" id="container">
+<img class="images" id="sun"  src="images/sun.png"/>
+</div>
+
+<div class="container" id="player-control">
+    <button type="button" id="play-pause">PLAY</button>
+    <p id="info1">info here</p>
+    <p id="info2">another info</p>
+</div>
+
+
+<!--script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script-->
+
+<script>
+    var mover=[];
+    var mass = [10, 60];
+    var iloc = [[10, 30], [90, 30]];
+    var ini_force = [[100, 100], [100, 50]];
+
+    var att_loc=[450, 200];
+    var attractor = new Attractor(10000, att_loc);
+
+    $("#sun").css({"position":"absolute",
+                        "left": att_loc[0],
+                        "top": att_loc[1],
+                        "opacity": 0.5});
+
+    for( var i=0; i<2; i++){
+        $("#container").append("<img src='images/sp"+(i+1)+".png' id='sp"+(i+1)+"'/>");
+    
+        mover[i] = new Mover(mass[i], iloc[i],
+                            $("#container").width()-$("#sp"+(i+1)).width(), 
+                            $("#container").height()-$("#sp"+(i+1)).height());
+
+        $("#sp"+(i+1)).css({"position":"absolute",
+                        "left": mover[i].x(),
+                        "top":mover[i].y()});
+
+        mover[i].applyForce( ini_force[i]);
+    }
+
+    
+    function updateTime(){
+        var force = [[3,3], [3,3]];
+        var friction=[0.1, 0.2];
+        var water_drag = 0.1;
+
+        for( var i=0; i<2; i++){
+            
+            var infotext ="";
+
+            //mover[i].applyForce(force[i]);
+            mover[i].applyForce( [0, 0.1*mover[i].mass]);
+            var att_force = attractor.attract(mover[i], 200);
+            mover[i].applyForce(att_force);
+
+            //mover[i].applyFriction(friction[i]);
+            /*var wpos = $("#water").position();
+            var wright = wpos.left+ $("#water").width();
+            var wbottom = wpos.top+ $("#water").height();
+            
+            if( mover[i].isInBox( wpos.left, wpos.top, wright, wbottom) ){
+                mover[i].applyDrag( water_drag );
+            }*/
+
+            infotext += " acceleration"+(i+1)+":"+mover[i].location[0].toFixed(4)+" "+mover[i].location[1].toFixed(4);
+
+            $("#info"+(i+1)).text(infotext);
+
+            mover[i].update();
+            mover[i].bounceOnEdge();
+
+            var angle = mover[i].heading();
+
+            if( angle !=0 ) $("#sp"+(i+1)).rotate(180*angle/Math.PI);
+            $("#sp"+(i+1)).css({"left": mover[i].x(), "top":mover[i].y()});
+
+        }
+    }
+
+    jQuery(document).ready(function(){
+        updateTime();
+        setInterval( updateTime, 30);
+    });
+
+    $("#play-pause").on("click", function(event){
+         $("#play-pause").blur(); //remove focus from the play/pause button
+    });
+</script>
+
+
+</body>
+</html>

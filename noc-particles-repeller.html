@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nature of Code Mover Class</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body{
+            font-family: monospace;
+            background-color: #eee;
+            margin: 0;
+        }
+
+        .container{
+            position: relative;
+            width: 1000px;
+            margin: 0 auto;
+        }
+        
+        #container{
+            background-color: black;
+            height: 600px;
+            color: white;
+        }
+
+         #svg-container{
+            position: absolute;
+            left:0;
+            top: 0;
+            height: inherit;
+            width:inherit;
+        }
+
+        #svg-container circle{
+           fill: #fff;
+       }
+
+        #water{
+            background-color: #6a3a00;
+            position: absolute;
+            left:0;
+            top: 400px;
+            height: 200px;
+            width:inherit;
+        }
+
+        #player-control{
+            background-color: #333;
+            color: white;
+            height: 100px;
+        }
+    </style>
+    <script  type="text/javascript" src="js/lib/gl-matrix.js"></script>
+    <script  type="text/javascript" src="js/particle.js"></script>
+    <script  type="text/javascript" src="js/attractor-gl.js"></script>
+
+
+    <script  type="text/javascript" src="js/lib/jquery-1.11.2.min.js" ></script>
+    <script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+</head>
+
+<body>
+<div class="container" id="container">
+    <svg id="svg-container" xmlns="http://www.w3.org/2000/svg">
+    </svg>
+</div>
+
+<div class="container" id="player-control">
+    <button type="button" id="play-pause">PLAY</button>
+    <p id="info1">info here</p>
+    <p id="info2">another info</p>
+</div>
+
+
+<!--script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script-->
+
+<script>
+    var num_particles = 1000;
+    var particle_life = 8000;
+    var particle_lifeR = [5000, 8000];
+    var particle_mass = 10;
+    var emitter = {type: EM_POINT,
+                    points:[20, 20, 500, 500],
+                    angle_range: [0, 360],
+                    strength_range: [30, 80],
+                    feed_type: EM_ATONCE};
+    var repeller_strength = 8000;
+    var particleSystem = new ParticleSystem(num_particles, particle_lifeR, 
+                                            particle_mass, 1000, 600, 
+                                            emitter);
+
+    setup_scene();
+    particleSystem.start();
+
+    /* necessary functions, callbacks, and event handlers to run the page */
+    function makeSVG(tag, attrs) {
+        var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (var k in attrs)
+            el.setAttribute(k, attrs[k]);
+            return el;
+    }
+
+    function setup_scene(){
+        var circle_r = 6;
+        for( var i=0; i<particleSystem.particles.length; i++ ){
+            var circle = makeSVG('circle', 
+                                {cx: particleSystem.getParticle(i).x(),
+                                 cy: particleSystem.getParticle(i).x(), 
+                                 r: circle_r, 
+                                 id: "circle"+(i+1)});
+            document.getElementById('svg-container').appendChild(circle);
+        }
+    }
+
+    function drawParticle(index, particle){
+        var opacity = particle.lifespan/particle_life;
+        $("#circle"+(index+1)).attr({"cx":particle.x(),
+                                    "cy":particle.y(),
+                                    "fill-opacity":opacity});
+    }
+
+    function updateTime(){
+        particleSystem.update();
+        particleSystem.bounceOnEdge();
+        particleSystem.draw(drawParticle);
+    }
+
+    jQuery(document).ready(function(){
+        setInterval( updateTime, 30);
+    });
+
+     jQuery(document).mousemove(function(event){
+        var pos = [event.pageX - $("#svg-container").position().left,
+                    event.pageY - $("#svg-container").position().top];
+        var arg = {location: pos, g:repeller_strength};
+
+        particleSystem.applyForceForEach(repel, arg);
+        particleSystem.update();
+    });
+
+    $("#play-pause").on("click", function(event){
+         $("#play-pause").blur(); //remove focus from the play/pause button
+    });
+</script>
+
+
+</body>
+</html>
