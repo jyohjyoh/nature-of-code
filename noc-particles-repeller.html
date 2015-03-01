@@ -50,6 +50,11 @@
             background-color: #333;
             color: white;
             height: 100px;
+            text-align: center;
+        }
+
+        #play-pause{
+            margin-top: 20px;
         }
     </style>
     <script  type="text/javascript" src="js/lib/gl-matrix.js"></script>
@@ -68,9 +73,7 @@
 </div>
 
 <div class="container" id="player-control">
-    <button type="button" id="play-pause">PLAY</button>
-    <p id="info1">info here</p>
-    <p id="info2">another info</p>
+    <button type="button" id="play-pause">RESTART</button>
 </div>
 
 
@@ -141,7 +144,7 @@
     });
 
     $("#play-pause").on("click", function(event){
-         $("#play-pause").blur(); //remove focus from the play/pause button
+         history.go(0);
     });
 </script>
 
